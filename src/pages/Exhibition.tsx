@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db, COLLECTIONS } from '../lib/firebase';
 import { Loader2, Clock, Ticket, MapPin, WifiOff, RefreshCw } from 'lucide-react';
+import ImageViewer from '../components/ImageViewer';
 import type { Exhibition } from '../types';
 
 export default function Exhibition() {
@@ -11,6 +12,7 @@ export default function Exhibition() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -125,7 +127,8 @@ export default function Exhibition() {
         <img
           src={exhibition.mainImage}
           alt={exhibition.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover cursor-pointer"
+          onClick={() => setSelectedImage(exhibition.mainImage)}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-8">
@@ -151,11 +154,15 @@ export default function Exhibition() {
               <h2 className="text-2xl font-bold mb-6">Gallery</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {exhibition.gallery.map((image, index) => (
-                  <div key={index} className="relative aspect-[4/3]">
+                  <div 
+                    key={index} 
+                    className="relative aspect-[4/3] cursor-pointer group"
+                    onClick={() => setSelectedImage(image)}
+                  >
                     <img
                       src={image}
                       alt={`Gallery image ${index + 1}`}
-                      className="w-full h-full object-cover rounded-lg"
+                      className="w-full h-full object-cover rounded-lg group-hover:opacity-90 transition-opacity"
                     />
                   </div>
                 ))}
@@ -202,6 +209,14 @@ export default function Exhibition() {
           </div>
         )}
       </div>
+
+      {selectedImage && (
+        <ImageViewer
+          src={selectedImage}
+          alt="Exhibition image"
+          onClose={() => setSelectedImage(null)}
+        />
+      )}
     </div>
   );
 }

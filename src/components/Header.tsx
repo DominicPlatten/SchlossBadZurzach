@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, Outlet } from 'react-router-dom';
-import { Palette, Map as MapIcon } from 'lucide-react';
+import { Map as MapIcon } from 'lucide-react';
+import Logo from './Logo';
 
 export default function Header() {
   return (
@@ -8,9 +9,9 @@ export default function Header() {
       <header className="bg-white shadow-sm">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <Palette className="h-8 w-8 text-indigo-600" />
-              <span className="text-xl font-semibold">Modern Art Museum</span>
+            <Link to="/" className="flex items-center space-x-3">
+              <Logo />
+              <span className="text-xl font-semibold">Schloss Bad Zurzach</span>
             </Link>
             <div className="flex space-x-8">
               <Link to="/" className="text-gray-700 hover:text-indigo-600">Exhibitions</Link>

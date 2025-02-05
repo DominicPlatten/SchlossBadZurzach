@@ -10,7 +10,6 @@ import {
   orderBy,
   serverTimestamp,
   where,
-  limit,
   setDoc
 } from 'firebase/firestore';
 import { 
@@ -36,6 +35,16 @@ export const uploadImage = async (file: File, folder: 'exhibitions' | 'artists' 
   const storageRef = ref(storage, `${folder}/${actualFilename}`);
   await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);
+};
+
+export const getMapUrl = async (): Promise<string> => {
+  try {
+    const mapRef = ref(storage, `${STORAGE_PATHS.MAP}/current.jpg`);
+    return await getDownloadURL(mapRef);
+  } catch (error) {
+    console.error('Error getting map URL:', error);
+    throw error;
+  }
 };
 
 export const deleteImage = async (url: string) => {

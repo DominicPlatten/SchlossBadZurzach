@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, COLLECTIONS } from '../lib/firebase';
 import { Loader2, WifiOff, RefreshCw } from 'lucide-react';
+import ImageViewer from '../components/ImageViewer';
 import ExhibitionTile from '../components/ExhibitionTile';
 import type { Artist, Exhibition } from '../types';
 
@@ -13,6 +14,7 @@ export default function Artist() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -139,7 +141,8 @@ export default function Artist() {
           <img
             src={artist.mainImage}
             alt={artist.name}
-            className="w-full h-96 object-cover rounded-lg"
+            className="w-full h-96 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+            onClick={() => setSelectedImage(artist.mainImage)}
           />
         </div>
         <div className="lg:col-span-2">
@@ -153,7 +156,7 @@ export default function Artist() {
           <h2 className="text-2xl font-bold mb-6">Portfolio</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {artist.portfolio.map((work, index) => (
-              <div key={index} className="group">
+              <div key={index} className="group cursor-pointer" onClick={() => setSelectedImage(work.imageUrl)}>
                 <div className="relative aspect-[4/3] rounded-lg overflow-hidden">
                   <img
                     src={work.imageUrl}
@@ -180,6 +183,14 @@ export default function Artist() {
             ))}
           </div>
         </div>
+      )}
+
+      {selectedImage && (
+        <ImageViewer
+          src={selectedImage}
+          alt="Artist image"
+          onClose={() => setSelectedImage(null)}
+        />
       )}
     </div>
   );

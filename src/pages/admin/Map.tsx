@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { PlusCircle, Pencil, Trash2, AlertCircle, Upload, X } from 'lucide-react';
-import { getArtLocations, createArtLocation, updateArtLocation, deleteArtLocation, uploadImage } from '../../lib/firebase-admin';
-import type { ArtLocation } from '../../types';
+import { PlusCircle, Pencil, Trash2, AlertCircle, Upload, X, ChevronDown, Check } from 'lucide-react';
+import { getArtLocations, createArtLocation, updateArtLocation, deleteArtLocation, uploadImage, getArtists } from '../../lib/firebase-admin';
+import type { ArtLocation, Artist } from '../../types';
 
-const DEFAULT_MAP_URL = 'https://images.unsplash.com/photo-1524813686514-a57563d77965?w=1200&auto=format&fit=crop&q=80';
+const MAP_URL = 'https://raw.githubusercontent.com/dominicplatten/SchlossBadZurzach/main/map.png';
 
 interface LocationFormData {
   title: string;
   description: string;
-  artist: string;
+  artistId: string;
   coordinates: {
     x: number;
     y: number;
@@ -18,14 +18,16 @@ interface LocationFormData {
 
 export default function AdminMap() {
   const [locations, setLocations] = useState<ArtLocation[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<ArtLocation | null>(null);
+  const [showArtistDropdown, setShowArtistDropdown] = useState(false);
   const [formData, setFormData] = useState<LocationFormData>({
     title: '',
     description: '',
-    artist: '',
+    artistId: '',
     coordinates: { x: 0, y: 0 }
   });
   const [artworkImage, setArtworkImage] = useState<File | null>(null);
@@ -45,13 +47,17 @@ export default function AdminMap() {
     onDrop: (acceptedFiles) => setMapImage(acceptedFiles[0])
   });
 
-  const loadLocations = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const data = await getArtLocations();
-      setLocations(data);
+      const [locationsData, artistsData] = await Promise.all([
+        getArtLocations(),
+        getArtists()
+      ]);
+      setLocations(locationsData);
+      setArtists(artistsData);
     } catch (err) {
-      setError('Failed to load locations');
+      setError('Failed to load data');
       console.error(err);
     } finally {
       setLoading(false);
@@ -59,7 +65,7 @@ export default function AdminMap() {
   };
 
   useEffect(() => {
-    loadLocations();
+    loadData();
   }, []);
 
   const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -82,6 +88,11 @@ export default function AdminMap() {
       setLoading(true);
       setError(null);
 
+      if (!formData.artistId) {
+        setError('Please select an artist');
+        return;
+      }
+
       let artworkImageUrl = selectedLocation?.imageUrl || '';
       if (artworkImage) {
         artworkImageUrl = await uploadImage(artworkImage, 'artLocations');
@@ -98,12 +109,11 @@ export default function AdminMap() {
         await createArtLocation(locationData);
       }
 
-      // If map image was uploaded, update it in the map folder
       if (mapImage) {
         await uploadImage(mapImage, 'map', 'current.jpg');
       }
 
-      await loadLocations();
+      await loadData();
       handleFormClose();
     } catch (err) {
       console.error('Failed to save location:', err);
@@ -119,12 +129,13 @@ export default function AdminMap() {
     setFormData({
       title: '',
       description: '',
-      artist: '',
+      artistId: '',
       coordinates: { x: 0, y: 0 }
     });
     setArtworkImage(null);
     setMapImage(null);
     setPlacingMarker(false);
+    setShowArtistDropdown(false);
   };
 
   const handleEdit = (location: ArtLocation) => {
@@ -132,7 +143,7 @@ export default function AdminMap() {
     setFormData({
       title: location.title,
       description: location.description,
-      artist: location.artist,
+      artistId: location.artistId,
       coordinates: location.coordinates
     });
     setShowForm(true);
@@ -147,7 +158,7 @@ export default function AdminMap() {
     try {
       setLoading(true);
       await deleteArtLocation(id);
-      await loadLocations();
+      await loadData();
       setDeleteConfirm(null);
     } catch (err) {
       console.error('Failed to delete location:', err);
@@ -155,6 +166,11 @@ export default function AdminMap() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getArtistName = (artistId: string) => {
+    const artist = artists.find(a => a.id === artistId);
+    return artist ? artist.name : 'Unknown Artist';
   };
 
   if (loading) {
@@ -230,13 +246,54 @@ export default function AdminMap() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Artist
                     </label>
-                    <input
-                      type="text"
-                      required
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      value={formData.artist}
-                      onChange={e => setFormData(prev => ({ ...prev, artist: e.target.value }))}
-                    />
+                    <div className="relative">
+                      <button
+                        type="button"
+                        className="w-full bg-white border border-gray-300 rounded-md shadow-sm px-4 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                        onClick={() => setShowArtistDropdown(!showArtistDropdown)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="block truncate">
+                            {formData.artistId ? getArtistName(formData.artistId) : 'Select an artist'}
+                          </span>
+                          <ChevronDown className="h-5 w-5 text-gray-400" />
+                        </div>
+                      </button>
+
+                      {showArtistDropdown && (
+                        <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                          {artists.map((artist) => (
+                            <div
+                              key={artist.id}
+                              className={`
+                                cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-indigo-50
+                                ${formData.artistId === artist.id ? 'bg-indigo-50' : ''}
+                              `}
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, artistId: artist.id }));
+                                setShowArtistDropdown(false);
+                              }}
+                            >
+                              <div className="flex items-center">
+                                <img
+                                  src={artist.mainImage}
+                                  alt={artist.name}
+                                  className="h-8 w-8 rounded-full object-cover"
+                                />
+                                <span className="ml-3 block truncate font-medium">
+                                  {artist.name}
+                                </span>
+                              </div>
+                              {formData.artistId === artist.id && (
+                                <span className="absolute inset-y-0 right-0 flex items-center pr-4">
+                                  <Check className="h-5 w-5 text-indigo-600" />
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div>
@@ -313,7 +370,7 @@ export default function AdminMap() {
                         onClick={handleMapClick}
                       >
                         <img
-                          src={DEFAULT_MAP_URL}
+                          src={MAP_URL}
                           alt="Museum Map"
                           className="w-full h-full object-cover"
                         />
@@ -397,7 +454,7 @@ export default function AdminMap() {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {location.artist}
+                  {getArtistName(location.artistId)}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   x: {location.coordinates.x.toFixed(1)}%, y: {location.coordinates.y.toFixed(1)}%

@@ -44,10 +44,10 @@ export interface ArtLocation {
   title: string;
   description: string;
   imageUrl: string;
-  artist: string;
+  artistId: string;
   coordinates: {
-    x: number; // percentage from left
-    y: number; // percentage from top
+    x: number;
+    y: number;
   };
   createdAt: string;
   updatedAt: string;

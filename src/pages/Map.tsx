@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { getArtLocations } from '../lib/firebase-admin';
+import { Link } from 'react-router-dom';
+import { getArtLocations, getArtists, getMapUrl } from '../lib/firebase-admin';
 import { Loader2, X, WifiOff, RefreshCw } from 'lucide-react';
-import type { ArtLocation } from '../types';
-
-const DEFAULT_MAP_URL = 'https://images.unsplash.com/photo-1524813686514-a57563d77965?w=1200&auto=format&fit=crop&q=80';
+import type { ArtLocation, Artist } from '../types';
 
 export default function Map() {
   const [locations, setLocations] = useState<ArtLocation[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [mapUrl, setMapUrl] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<ArtLocation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,18 +26,24 @@ export default function Map() {
     };
   }, []);
 
-  const loadLocations = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getArtLocations();
-      setLocations(data);
+      const [locationsData, artistsData, mapUrlData] = await Promise.all([
+        getArtLocations(),
+        getArtists(),
+        getMapUrl()
+      ]);
+      setLocations(locationsData);
+      setArtists(artistsData);
+      setMapUrl(mapUrlData);
     } catch (err) {
-      console.error('Failed to load art locations:', err);
+      console.error('Failed to load data:', err);
       setError(
         !navigator.onLine
           ? 'You are currently offline. Please check your internet connection and try again.'
-          : 'Failed to load art locations. Please try again.'
+          : 'Failed to load data. Please try again.'
       );
     } finally {
       setLoading(false);
@@ -44,8 +51,12 @@ export default function Map() {
   };
 
   useEffect(() => {
-    loadLocations();
+    loadData();
   }, []);
+
+  const getArtist = (artistId: string) => {
+    return artists.find(a => a.id === artistId);
+  };
 
   if (loading) {
     return (
@@ -73,7 +84,7 @@ export default function Map() {
             <p className="text-red-700">{error}</p>
           </div>
           <button
-            onClick={loadLocations}
+            onClick={loadData}
             className="mt-4 inline-flex items-center space-x-2 text-sm font-medium text-red-700 hover:text-red-800"
           >
             <RefreshCw className="h-4 w-4" />
@@ -82,14 +93,19 @@ export default function Map() {
         </div>
       ) : (
         <div className="relative">
-          {/* Map Container */}
           <div className="relative w-full" style={{ paddingBottom: '75%' }}>
             <div className="absolute inset-0 rounded-lg overflow-hidden">
-              <img
-                src={DEFAULT_MAP_URL}
-                alt="Museum Map"
-                className="w-full h-full object-cover"
-              />
+              {mapUrl ? (
+                <img
+                  src={mapUrl}
+                  alt="Museum Map"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                  <p className="text-gray-500">Map not available</p>
+                </div>
+              )}
               
               {/* Location Points */}
               {locations.map((location) => (
@@ -128,7 +144,25 @@ export default function Map() {
                 <div className="p-6">
                   <h2 className="text-2xl font-bold mb-2">{selectedLocation.title}</h2>
                   <p className="text-gray-600 mb-4">{selectedLocation.description}</p>
-                  <p className="text-sm text-gray-500">Artist: {selectedLocation.artist}</p>
+                  {selectedLocation.artistId && (
+                    <div className="flex items-center">
+                      {getArtist(selectedLocation.artistId) && (
+                        <Link 
+                          to={`/artist/${selectedLocation.artistId}`}
+                          className="flex items-center space-x-3 text-indigo-600 hover:text-indigo-800"
+                        >
+                          <img
+                            src={getArtist(selectedLocation.artistId)!.mainImage}
+                            alt={getArtist(selectedLocation.artistId)!.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                          <span className="font-medium">
+                            {getArtist(selectedLocation.artistId)!.name}
+                          </span>
+                        </Link>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
