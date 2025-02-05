@@ -1,27 +1,16 @@
-# Dependencies
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
 node_modules
-.pnp
-.pnp.js
-
-# Testing
-coverage
-
-# Production
 dist
 dist-ssr
 *.local
-
-# Environment files
-.env
-.env.*
-!.env.example
-
-# Firebase
-.firebase/
-*.log
-firebase-debug.log*
-firebase-debug.*.log*
-ui-debug.log*
 
 # Editor directories and files
 .vscode/*
@@ -33,27 +22,3 @@ ui-debug.log*
 *.njsproj
 *.sln
 *.sw?
-
-# TypeScript
-*.tsbuildinfo
-
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional stylelint cache
-.stylelintcache
-
-# Bolt specific
-.bolt/

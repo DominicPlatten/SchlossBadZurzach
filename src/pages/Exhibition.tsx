@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { doc, getDoc, getDocs, collection, query, where } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db, COLLECTIONS } from '../lib/firebase';
-import { Loader2, Clock, Ticket, MapPin, WifiOff, RefreshCw, Users } from 'lucide-react';
-import type { Exhibition, Artist } from '../types';
+import { Loader2, Clock, Ticket, MapPin, WifiOff, RefreshCw } from 'lucide-react';
+import type { Exhibition } from '../types';
 
 export default function Exhibition() {
   const { id } = useParams<{ id: string }>();
   const [exhibition, setExhibition] = useState<Exhibition | null>(null);
-  const [linkedArtists, setLinkedArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -52,24 +51,6 @@ export default function Exhibition() {
       } as Exhibition;
 
       setExhibition(data);
-
-      // Load linked artists if any
-      if (data.artistIds && data.artistIds.length > 0) {
-        const artistsData = await Promise.all(
-          data.artistIds.map(artistId => 
-            getDoc(doc(db, COLLECTIONS.ARTISTS, artistId))
-          )
-        );
-
-        const artists = artistsData
-          .filter(doc => doc.exists())
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as Artist[];
-
-        setLinkedArtists(artists);
-      }
     } catch (err) {
       console.error('Failed to load exhibition:', err);
       setError(
@@ -163,35 +144,6 @@ export default function Exhibition() {
           <p className="text-gray-700 text-lg leading-relaxed mb-8">
             {exhibition.description}
           </p>
-
-          {/* Featured Artists Section */}
-          {linkedArtists.length > 0 && (
-            <div className="mb-12">
-              <h2 className="text-2xl font-bold mb-6 flex items-center">
-                <Users className="h-6 w-6 mr-2" />
-                Featured Artists
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {linkedArtists.map(artist => (
-                  <Link
-                    key={artist.id}
-                    to={`/artist/${artist.id}`}
-                    className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <img
-                      src={artist.mainImage}
-                      alt={artist.name}
-                      className="h-16 w-16 rounded-full object-cover"
-                    />
-                    <div className="ml-4">
-                      <h3 className="font-semibold text-lg text-gray-900">{artist.name}</h3>
-                      <p className="text-gray-600 line-clamp-2">{artist.bio}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Gallery */}
           {exhibition.gallery && exhibition.gallery.length > 0 && (
