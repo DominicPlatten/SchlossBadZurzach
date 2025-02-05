@@ -38,3 +38,17 @@ export interface Artist {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ArtLocation {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  artist: string;
+  coordinates: {
+    x: number; // percentage from left
+    y: number; // percentage from top
+  };
+  createdAt: string;
+  updatedAt: string;
+}

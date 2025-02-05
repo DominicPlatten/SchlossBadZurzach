@@ -22,13 +22,15 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-// Initialize Analytics only if supported (will be null in environments that don't support it)
+// Initialize Analytics only if supported
 export const analytics = await isSupported().then(yes => yes ? getAnalytics(app) : null);
 
-// Storage folder structure constants
+// Storage paths
 export const STORAGE_PATHS = {
   EXHIBITIONS: 'exhibitions',
   ARTISTS: 'artists',
+  MAP: 'map',
+  ART_LOCATIONS: 'artLocations'
 } as const;
 
 // Collection names
@@ -36,4 +38,5 @@ export const COLLECTIONS = {
   EXHIBITIONS: 'exhibitions',
   ARTISTS: 'artists',
   USERS: 'users',
+  ART_LOCATIONS: 'artLocations'
 } as const;

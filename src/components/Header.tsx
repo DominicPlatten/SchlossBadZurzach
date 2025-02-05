@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet } from 'react-router-dom';
-import { Palette } from 'lucide-react';
+import { Palette, Map as MapIcon } from 'lucide-react';
 
 export default function Header() {
   return (
@@ -14,6 +14,7 @@ export default function Header() {
             </Link>
             <div className="flex space-x-8">
               <Link to="/" className="text-gray-700 hover:text-indigo-600">Exhibitions</Link>
+              <Link to="/map" className="text-gray-700 hover:text-indigo-600">Map</Link>
               <Link to="/artists" className="text-gray-700 hover:text-indigo-600">Artists</Link>
             </div>
           </div>

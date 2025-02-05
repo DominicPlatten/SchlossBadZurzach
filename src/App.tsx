@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './pages/Home';
 import Exhibition from './pages/Exhibition';
+import Map from './pages/Map';
 import Artists from './pages/Artists';
 import Artist from './pages/Artist';
 import LoginForm from './components/auth/LoginForm';
@@ -11,6 +12,7 @@ import AdminLayout from './components/admin/AdminLayout';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminExhibitions from './pages/admin/Exhibitions';
 import AdminArtists from './pages/admin/Artists';
+import AdminMap from './pages/admin/Map';
 
 function App() {
   return (
@@ -21,6 +23,7 @@ function App() {
           <Route path="/" element={<Header />}>
             <Route index element={<Home />} />
             <Route path="exhibition/:id" element={<Exhibition />} />
+            <Route path="map" element={<Map />} />
             <Route path="artists" element={<Artists />} />
             <Route path="artist/:id" element={<Artist />} />
           </Route>
@@ -40,6 +43,7 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="exhibitions" element={<AdminExhibitions />} />
             <Route path="artists" element={<AdminArtists />} />
+            <Route path="map" element={<AdminMap />} />
           </Route>
         </Routes>
       </div>

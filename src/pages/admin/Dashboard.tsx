@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Image } from 'lucide-react';
+import { LayoutDashboard, Users, Image, Map } from 'lucide-react';
 
 export default function Dashboard() {
   const modules = [
@@ -15,6 +15,12 @@ export default function Dashboard() {
       description: 'Manage artist profiles and portfolios',
       icon: <Users className="h-8 w-8 text-indigo-600" />,
       link: '/admin/artists'
+    },
+    {
+      title: 'Map',
+      description: 'Manage map and artwork locations',
+      icon: <Map className="h-8 w-8 text-indigo-600" />,
+      link: '/admin/map'
     }
   ];
 
