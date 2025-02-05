@@ -1,0 +1,2 @@
+# SchlossBadZurzach
+Website for SchlossBadZurzach
