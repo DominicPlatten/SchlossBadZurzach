@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getArtLocations, getArtists, getMapUrl } from '../lib/firebase-admin';
-import { Loader2, X, WifiOff, RefreshCw } from 'lucide-react';
-import type { ArtLocation, Artist } from '../types';
+import { getArtLocations, getArtists, getMapUrl, getMapContent } from '../lib/firebase-admin';
+import { Loader2, X, WifiOff, RefreshCw, Info, MapPin, Clock, Phone, Mail, Car, Train } from 'lucide-react';
+import type { ArtLocation, Artist, MapContent } from '../types';
 
 export default function Map() {
   const [locations, setLocations] = useState<ArtLocation[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
   const [mapUrl, setMapUrl] = useState<string | null>(null);
+  const [mapContent, setMapContent] = useState<MapContent | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<ArtLocation | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -30,14 +32,16 @@ export default function Map() {
     try {
       setLoading(true);
       setError(null);
-      const [locationsData, artistsData, mapUrlData] = await Promise.all([
+      const [locationsData, artistsData, mapUrlData, mapContentData] = await Promise.all([
         getArtLocations(),
         getArtists(),
-        getMapUrl()
+        getMapUrl(),
+        getMapContent()
       ]);
       setLocations(locationsData);
       setArtists(artistsData);
       setMapUrl(mapUrlData);
+      setMapContent(mapContentData);
     } catch (err) {
       console.error('Failed to load data:', err);
       setError(
@@ -56,6 +60,10 @@ export default function Map() {
 
   const getArtist = (artistId: string) => {
     return artists.find(a => a.id === artistId);
+  };
+
+  const handleShowOnMap = () => {
+    window.open('https://maps.google.com/?q=47.5889,8.2944', '_blank');
   };
 
   if (loading) {
@@ -92,36 +100,161 @@ export default function Map() {
           </button>
         </div>
       ) : (
-        <div className="relative">
-          <div className="relative w-full" style={{ paddingBottom: '75%' }}>
-            <div className="absolute inset-0 rounded-lg overflow-hidden">
-              {mapUrl ? (
-                <img
-                  src={mapUrl}
-                  alt="Museum Map"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                  <p className="text-gray-500">Map not available</p>
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Park Himmelrych</h1>
+            <button
+              onClick={() => setShowInfo(!showInfo)}
+              className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            >
+              <Info className="h-5 w-5" />
+              <span>{showInfo ? 'Hide Information' : 'Show Information'}</span>
+            </button>
+          </div>
+
+          {showInfo && (
+            <div className="mb-8 bg-white rounded-lg shadow-lg p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">Visitor Information</h2>
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <Clock className="h-5 w-5 text-indigo-600 mt-1" />
+                      <div>
+                        <h3 className="font-medium">Opening Hours</h3>
+                        <p className="text-gray-600">Daily from 10:00 until dusk</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <MapPin className="h-5 w-5 text-indigo-600 mt-1" />
+                      <div>
+                        <h3 className="font-medium">Location</h3>
+                        <p className="text-gray-600">Park Himmelrych</p>
+                        <button
+                          onClick={handleShowOnMap}
+                          className="text-indigo-600 hover:text-indigo-800 text-sm mt-1"
+                        >
+                          Show on map
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <Car className="h-5 w-5 text-indigo-600 mt-1" />
+                      <div>
+                        <h3 className="font-medium">Parking</h3>
+                        <p className="text-gray-600">Available on site</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <Train className="h-5 w-5 text-indigo-600 mt-1" />
+                      <div>
+                        <h3 className="font-medium">Public Transport</h3>
+                        <p className="text-gray-600">Direct access from Bad Zurzach train station</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
-              
-              {/* Location Points */}
-              {locations.map((location) => (
-                <button
-                  key={location.id}
-                  onClick={() => setSelectedLocation(location)}
-                  className="absolute w-6 h-6 transform -translate-x-1/2 -translate-y-1/2 bg-indigo-600 rounded-full border-2 border-white shadow-lg hover:bg-indigo-700 transition-colors"
-                  style={{
-                    left: `${location.coordinates.x}%`,
-                    top: `${location.coordinates.y}%`,
-                  }}
-                >
-                  <span className="sr-only">View {location.title}</span>
-                </button>
-              ))}
+                <div>
+                  <h2 className="text-xl font-semibold mb-4">Contact</h2>
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <Mail className="h-5 w-5 text-indigo-600 mt-1" />
+                      <div>
+                        <h3 className="font-medium">Email</h3>
+                        <a 
+                          href="mailto:info@parkhimmelrych.ch" 
+                          className="text-indigo-600 hover:text-indigo-800"
+                        >
+                          info@parkhimmelrych.ch
+                        </a>
+                      </div>
+                    </div>
+                    <div className="flex items-start space-x-3">
+                      <Phone className="h-5 w-5 text-indigo-600 mt-1" />
+                      <div>
+                        <h3 className="font-medium">Phone</h3>
+                        <a 
+                          href="tel:+41792542376" 
+                          className="text-indigo-600 hover:text-indigo-800"
+                        >
+                          079 254 23 76
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+          )}
+
+          <div className="relative">
+            <div className="relative w-full" style={{ paddingBottom: '75%' }}>
+              <div className="absolute inset-0 rounded-lg overflow-hidden">
+                {mapUrl ? (
+                  <img
+                    src={mapUrl}
+                    alt="Museum Map"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                    <p className="text-gray-500">Map not available</p>
+                  </div>
+                )}
+                
+                {/* Location Points */}
+                {locations.map((location) => (
+                  <button
+                    key={location.id}
+                    onClick={() => setSelectedLocation(location)}
+                    className="absolute w-6 h-6 transform -translate-x-1/2 -translate-y-1/2 bg-indigo-600 rounded-full border-2 border-white shadow-lg hover:bg-indigo-700 transition-colors"
+                    style={{
+                      left: `${location.coordinates.x}%`,
+                      top: `${location.coordinates.y}%`,
+                    }}
+                  >
+                    <span className="sr-only">View {location.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Park Description */}
+            {mapContent?.parkDescription && (
+              <div className="mt-8 prose max-w-none">
+                <div className="whitespace-pre-line text-gray-700">
+                  {mapContent.parkDescription}
+                </div>
+              </div>
+            )}
+
+            {/* Legend */}
+            {mapContent?.legend && mapContent.legend.length > 0 && (
+              <div className="mt-8">
+                <h2 className="text-2xl font-bold mb-4">Legende</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {mapContent.legend.map((item) => {
+                    const artist = getArtist(item.artistId);
+                    return (
+                      <div key={item.number} className="flex items-start space-x-2">
+                        <span className="font-bold text-gray-700">{item.number}.</span>
+                        <div>
+                          <p className="text-gray-900">{item.title}</p>
+                          {artist && (
+                            <Link
+                              to={`/artist/${artist.id}`}
+                              className="text-sm text-indigo-600 hover:text-indigo-800"
+                            >
+                              {artist.name}
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Location Details Modal */}

@@ -2,14 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, COLLECTIONS } from '../lib/firebase';
-import { Loader2, WifiOff, RefreshCw } from 'lucide-react';
+import { Loader2, WifiOff, RefreshCw, Globe, FileText, Instagram, Facebook, Twitter, Linkedin } from 'lucide-react';
 import ImageViewer from '../components/ImageViewer';
 import ExhibitionTile from '../components/ExhibitionTile';
-import type { Artist, Exhibition } from '../types';
+import type { Artist as ArtistType, Exhibition } from '../types';
+
+const SocialIcon = ({ platform }: { platform: string }) => {
+  switch (platform) {
+    case 'instagram':
+      return <Instagram className="h-5 w-5" />;
+    case 'facebook':
+      return <Facebook className="h-5 w-5" />;
+    case 'twitter':
+      return <Twitter className="h-5 w-5" />;
+    case 'linkedin':
+      return <Linkedin className="h-5 w-5" />;
+    default:
+      return null;
+  }
+};
 
 export default function Artist() {
   const { id } = useParams<{ id: string }>();
-  const [artist, setArtist] = useState<Artist | null>(null);
+  const [artist, setArtist] = useState<ArtistType | null>(null);
   const [exhibitions, setExhibitions] = useState<Exhibition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +55,6 @@ export default function Artist() {
       setLoading(true);
       setError(null);
 
-      // Get artist data
       const artistRef = doc(db, COLLECTIONS.ARTISTS, id);
       const artistDoc = await getDoc(artistRef);
 
@@ -52,13 +66,12 @@ export default function Artist() {
       const artistData = {
         id: artistDoc.id,
         ...artistDoc.data()
-      } as Artist;
+      } as ArtistType;
 
       setArtist(artistData);
 
-      // Get artist's exhibitions
       const exhibitionsRef = collection(db, COLLECTIONS.EXHIBITIONS);
-      const exhibitionsQuery = query(exhibitionsRef, where('artistId', '==', id));
+      const exhibitionsQuery = query(exhibitionsRef, where('artistIds', 'array-contains', id));
       const exhibitionsSnapshot = await getDocs(exhibitionsQuery);
 
       const exhibitionsData = exhibitionsSnapshot.docs.map(doc => ({
@@ -144,10 +157,99 @@ export default function Artist() {
             className="w-full h-96 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
             onClick={() => setSelectedImage(artist.mainImage)}
           />
+          
+          {(artist.website || (artist.socialLinks && artist.socialLinks.length > 0)) && (
+            <div className="mt-6 space-y-4">
+              {artist.website && (
+                <a
+                  href={artist.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-800"
+                >
+                  <Globe className="h-5 w-5" />
+                  <span>Visit Website</span>
+                </a>
+              )}
+              
+              {artist.socialLinks && artist.socialLinks.length > 0 && (
+                <div className="flex space-x-4">
+                  {artist.socialLinks.map((link, index) => (
+                    <a
+                      key={index}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-600 hover:text-indigo-600"
+                      title={`Visit ${link.platform}`}
+                    >
+                      <SocialIcon platform={link.platform} />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {artist.documents && artist.documents.length > 0 && (
+            <div className="mt-6">
+              {artist.documents.filter(doc => doc.category === 'sales').length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-3">Verkaufsunterlagen</h3>
+                  <div className="space-y-2">
+                    {artist.documents
+                      .filter(doc => doc.category === 'sales')
+                      .map((doc, index) => (
+                        <a
+                          key={index}
+                          href={doc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-800"
+                        >
+                          <FileText className="h-5 w-5" />
+                          <span>{doc.title}</span>
+                        </a>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {artist.documents.filter(doc => doc.category === 'other').length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Documents</h3>
+                  <div className="space-y-2">
+                    {artist.documents
+                      .filter(doc => doc.category === 'other')
+                      .map((doc, index) => (
+                        <a
+                          key={index}
+                          href={doc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-800"
+                        >
+                          <FileText className="h-5 w-5" />
+                          <span>{doc.title}</span>
+                        </a>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+        
         <div className="lg:col-span-2">
           <h1 className="text-4xl font-bold mb-6">{artist.name}</h1>
-          <p className="text-lg text-gray-700">{artist.bio}</p>
+          <div className="prose max-w-none">
+            <div className="text-lg text-gray-700 mb-6">{artist.bio}</div>
+            {artist.detailedBio && (
+              <div className="text-gray-700 whitespace-pre-line">
+                {artist.detailedBio}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

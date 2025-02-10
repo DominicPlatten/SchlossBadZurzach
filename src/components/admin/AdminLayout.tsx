@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { Loader2 } from 'lucide-react';
 
@@ -25,9 +25,9 @@ export default function AdminLayout() {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <span className="text-xl font-semibold text-indigo-600">
+                <Link to="/admin" className="text-xl font-semibold text-indigo-600 hover:text-indigo-700">
                   Museum Admin
-                </span>
+                </Link>
               </div>
             </div>
             <div className="flex items-center">

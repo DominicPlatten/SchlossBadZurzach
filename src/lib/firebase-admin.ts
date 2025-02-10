@@ -19,7 +19,7 @@ import {
   deleteObject 
 } from 'firebase/storage';
 import { db, storage, COLLECTIONS, STORAGE_PATHS } from './firebase';
-import type { Exhibition, Artist, ArtLocation } from '../types';
+import type { Exhibition, Artist, ArtLocation, MapContent } from '../types';
 
 export const uploadImage = async (file: File, folder: 'exhibitions' | 'artists' | 'map' | 'artLocations', filename?: string): Promise<string> => {
   if (!file.type.startsWith('image/')) {
@@ -35,6 +35,42 @@ export const uploadImage = async (file: File, folder: 'exhibitions' | 'artists' 
   const storageRef = ref(storage, `${folder}/${actualFilename}`);
   await uploadBytes(storageRef, file);
   return getDownloadURL(storageRef);
+};
+
+export const uploadDocument = async (file: File): Promise<string> => {
+  if (file.type !== 'application/pdf') {
+    throw new Error('File must be a PDF');
+  }
+
+  const maxSize = 10 * 1024 * 1024;
+  if (file.size > maxSize) {
+    throw new Error('Document must be less than 10MB');
+  }
+
+  try {
+    const filename = `${Date.now()}-${file.name}`;
+    const storageRef = ref(storage, `documents/${filename}`);
+    
+    const metadata = {
+      contentType: 'application/pdf',
+    };
+    
+    await uploadBytes(storageRef, file, metadata);
+    return getDownloadURL(storageRef);
+  } catch (error) {
+    console.error('Error uploading document:', error);
+    throw new Error('Failed to upload document. Please try again.');
+  }
+};
+
+export const getPdfUrl = async (filename: string): Promise<string> => {
+  try {
+    const storageRef = ref(storage, `documents/${filename}`);
+    return await getDownloadURL(storageRef);
+  } catch (error) {
+    console.error('Error getting PDF URL:', error);
+    throw new Error('Failed to get PDF URL');
+  }
 };
 
 export const getMapUrl = async (): Promise<string> => {
@@ -275,4 +311,40 @@ export const updateArtLocation = async (id: string, data: Partial<ArtLocation>) 
 export const deleteArtLocation = async (id: string) => {
   const locationRef = doc(db, COLLECTIONS.ART_LOCATIONS, id);
   await deleteDoc(locationRef);
+};
+
+// Map Content management
+export const getMapContent = async (): Promise<MapContent | null> => {
+  try {
+    const mapContentRef = collection(db, COLLECTIONS.MAP_CONTENT);
+    const snapshot = await getDocs(mapContentRef);
+    
+    if (snapshot.empty) return null;
+    
+    const doc = snapshot.docs[0];
+    return {
+      id: doc.id,
+      ...doc.data()
+    } as MapContent;
+  } catch (error) {
+    console.error('Error fetching map content:', error);
+    throw error;
+  }
+};
+
+export const createMapContent = async (data: Omit<MapContent, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+  const mapContentRef = await addDoc(collection(db, COLLECTIONS.MAP_CONTENT), {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return mapContentRef.id;
+};
+
+export const updateMapContent = async (id: string, data: Partial<MapContent>) => {
+  const mapContentRef = doc(db, COLLECTIONS.MAP_CONTENT, id);
+  await updateDoc(mapContentRef, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
 };

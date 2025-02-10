@@ -1,3 +1,5 @@
+import { Timestamp } from 'firebase/firestore';
+
 export interface User {
   id: string;
   email: string;
@@ -37,6 +39,19 @@ export interface Artist {
   exhibitions: string[];
   createdAt: string;
   updatedAt: string;
+  // Artist details
+  detailedBio?: string;
+  website?: string;
+  documents?: {
+    title: string;
+    url: string;
+    type: 'pdf';
+    category: 'sales' | 'other'; // Add category field
+  }[];
+  socialLinks?: {
+    platform: 'instagram' | 'facebook' | 'twitter' | 'linkedin';
+    url: string;
+  }[];
 }
 
 export interface ArtLocation {
@@ -49,6 +64,18 @@ export interface ArtLocation {
     x: number;
     y: number;
   };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MapContent {
+  id: string;
+  parkDescription: string;
+  legend: Array<{
+    number: number;
+    title: string;
+    artistId: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 }

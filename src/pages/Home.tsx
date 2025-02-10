@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { getExhibitions, getFeaturedExhibition } from '../lib/firebase-admin';
 import ExhibitionTile from '../components/ExhibitionTile';
 import type { Exhibition } from '../types';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MapPin } from 'lucide-react';
 
 export default function Home() {
   const [featuredExhibition, setFeaturedExhibition] = useState<Exhibition | null>(null);
@@ -33,6 +33,10 @@ export default function Home() {
     loadExhibitions();
   }, []);
 
+  const handleShowOnMap = () => {
+    window.open('https://maps.google.com/?q=47.5889,8.2944', '_blank');
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -55,7 +59,7 @@ export default function Home() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {featuredExhibition && (
         <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6">Featured Exhibition</h2>
+          <h2 className="text-2xl font-bold mb-6">Aktuelle Ausstellung</h2>
           <Link to={`/exhibition/${featuredExhibition.id}`} className="block">
             <div className="relative h-[70vh] rounded-lg overflow-hidden group">
               <img
@@ -75,17 +79,41 @@ export default function Home() {
         </div>
       )}
 
-      <div>
-        <h2 className="text-2xl font-bold mb-6">Current Exhibitions</h2>
-        {regularExhibitions.length > 0 ? (
+      {regularExhibitions.length > 0 && (
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-6">Weitere Ausstellungen</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {regularExhibitions.map(exhibition => (
               <ExhibitionTile key={exhibition.id} exhibition={exhibition} />
             ))}
           </div>
-        ) : (
-          <p className="text-gray-500 text-center py-8">No current exhibitions</p>
-        )}
+        </div>
+      )}
+
+      {/* Welcome Section */}
+      <div className="prose max-w-none">
+        <div className="bg-white rounded-lg shadow-sm p-8">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-gray-700 space-y-6 whitespace-pre-line">
+              {`Lassen Sie sich von der einzigartigen Atmosphäre im Park Himmelrych verzaubern.
+
+Entdecken Sie die Skulpturenausstellung „Aufatmen im Park" und geniessen Sie inspirierende Kunst in der Natur. 
+
+Erleben Sie eine Hauch von Naturspiritualität und tanken Sie Energie.
+
+Der Park Himmelrych ist öffentlich zugänglich und der Eintritt ist frei, damit Sie ein rundum entspanntes Erlebnis geniessen können.
+`}
+            </div>
+
+            <button
+              onClick={handleShowOnMap}
+              className="mt-8 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <MapPin className="h-5 w-5 mr-2" />
+              Auf Google Maps anzeigen
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

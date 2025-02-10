@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
+import Footer from './components/Footer';
 import Home from './pages/Home';
 import Exhibition from './pages/Exhibition';
 import Map from './pages/Map';
@@ -17,7 +18,7 @@ import AdminMap from './pages/admin/Map';
 function App() {
   return (
     <Router>
-      <div>
+      <div className="min-h-screen flex flex-col">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Header />}>
@@ -46,6 +47,7 @@ function App() {
             <Route path="map" element={<AdminMap />} />
           </Route>
         </Routes>
+        <Footer />
       </div>
     </Router>
   );

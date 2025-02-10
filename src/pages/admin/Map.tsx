@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { PlusCircle, Pencil, Trash2, AlertCircle, Upload, X, ChevronDown, Check } from 'lucide-react';
-import { getArtLocations, createArtLocation, updateArtLocation, deleteArtLocation, uploadImage, getArtists } from '../../lib/firebase-admin';
-import type { ArtLocation, Artist } from '../../types';
+import { getArtLocations, createArtLocation, updateArtLocation, deleteArtLocation, uploadImage, getArtists, getMapContent, updateMapContent, createMapContent } from '../../lib/firebase-admin';
+import type { ArtLocation, Artist, MapContent } from '../../types';
 
 const MAP_URL = 'https://raw.githubusercontent.com/dominicplatten/SchlossBadZurzach/main/map.png';
 
@@ -34,6 +34,12 @@ export default function AdminMap() {
   const [mapImage, setMapImage] = useState<File | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [placingMarker, setPlacingMarker] = useState(false);
+  const [mapContent, setMapContent] = useState<MapContent | null>(null);
+  const [showMapContentForm, setShowMapContentForm] = useState(false);
+  const [mapContentFormData, setMapContentFormData] = useState({
+    parkDescription: '',
+    legend: [] as Array<{ number: number; title: string; artistId: string; }>
+  });
 
   const { getRootProps: getArtworkProps, getInputProps: getArtworkInputProps } = useDropzone({
     accept: { 'image/*': [] },
@@ -50,15 +56,24 @@ export default function AdminMap() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [locationsData, artistsData] = await Promise.all([
+      setError(null);
+      const [locationsData, artistsData, mapContentData] = await Promise.all([
         getArtLocations(),
-        getArtists()
+        getArtists(),
+        getMapContent()
       ]);
       setLocations(locationsData);
       setArtists(artistsData);
+      setMapContent(mapContentData);
+      if (mapContentData) {
+        setMapContentFormData({
+          parkDescription: mapContentData.parkDescription,
+          legend: mapContentData.legend
+        });
+      }
     } catch (err) {
+      console.error('Failed to load data:', err);
       setError('Failed to load data');
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -171,6 +186,58 @@ export default function AdminMap() {
   const getArtistName = (artistId: string) => {
     const artist = artists.find(a => a.id === artistId);
     return artist ? artist.name : 'Unknown Artist';
+  };
+
+  const handleMapContentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (mapContent) {
+        await updateMapContent(mapContent.id, mapContentFormData);
+      } else {
+        await createMapContent(mapContentFormData);
+      }
+
+      await loadData();
+      setShowMapContentForm(false);
+    } catch (err) {
+      console.error('Failed to save map content:', err);
+      setError('Failed to save map content');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addLegendItem = () => {
+    setMapContentFormData(prev => ({
+      ...prev,
+      legend: [
+        ...prev.legend,
+        {
+          number: prev.legend.length + 1,
+          title: '',
+          artistId: ''
+        }
+      ]
+    }));
+  };
+
+  const removeLegendItem = (index: number) => {
+    setMapContentFormData(prev => ({
+      ...prev,
+      legend: prev.legend.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateLegendItem = (index: number, field: 'title' | 'artistId', value: string) => {
+    setMapContentFormData(prev => ({
+      ...prev,
+      legend: prev.legend.map((item, i) => 
+        i === index ? { ...item, [field]: value } : item
+      )
+    }));
   };
 
   if (loading) {
@@ -483,6 +550,139 @@ export default function AdminMap() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-12">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold">Map Content</h2>
+          <button
+            onClick={() => setShowMapContentForm(true)}
+            className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+          >
+            <Pencil className="h-5 w-5" />
+            <span>Edit Content</span>
+          </button>
+        </div>
+
+        {showMapContentForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">Edit Map Content</h2>
+                <button
+                  onClick={() => setShowMapContentForm(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleMapContentSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Park Description
+                  </label>
+                  <textarea
+                    rows={10}
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    value={mapContentFormData.parkDescription}
+                    onChange={e => setMapContentFormData(prev => ({
+                      ...prev,
+                      parkDescription: e.target.value
+                    }))}
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Legend
+                    </label>
+                    <button
+                      type="button"
+                      onClick={addLegendItem}
+                      className="flex items-center space-x-2 text-sm text-indigo-600 hover:text-indigo-800"
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      <span>Add Item</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {mapContentFormData.legend.map((item, index) => (
+                      <div key={index} className="flex items-start space-x-4">
+                        <div className="w-16">
+                          <label className="block text-xs text-gray-500 mb-1">
+                            Number
+                          </label>
+                          <input
+                            type="number"
+                            value={item.number}
+                            onChange={e => updateLegendItem(index, 'title', e.target.value)}
+                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          />
+                        </div>
+                        <div className="flex-grow">
+                          <label className="block text-xs text-gray-500 mb-1">
+                            Title
+                          </label>
+                          <input
+                            type="text"
+                            value={item.title}
+                            onChange={e => updateLegendItem(index, 'title', e.target.value)}
+                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          />
+                        </div>
+                        <div className="w-64">
+                          <label className="block text-xs text-gray-500 mb-1">
+                            Artist
+                          </label>
+                          <select
+                            value={item.artistId}
+                            onChange={e => updateLegendItem(index, 'artistId', e.target.value)}
+                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          >
+                            <option value="">Select Artist</option>
+                            {artists.map(artist => (
+                              <option key={artist.id} value={artist.id}>
+                                {artist.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeLegendItem(index)}
+                          className="mt-6 text-red-600 hover:text-red-800"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowMapContentForm(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    disabled={loading}
+                  >
+                    {loading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, AlertCircle, Image as ImageIcon, Plus } from 'lucide-react';
-import { uploadImage, createArtist, updateArtist } from '../../lib/firebase-admin';
+import { Upload, X, AlertCircle, Image as ImageIcon, Plus, Link as LinkIcon, FileText } from 'lucide-react';
+import { uploadImage, uploadDocument, createArtist, updateArtist } from '../../lib/firebase-admin';
 import type { Artist } from '../../types';
 
 interface ArtistFormProps {
@@ -16,9 +16,20 @@ export default function ArtistForm({ artist, onClose, onSuccess }: ArtistFormPro
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [portfolioFiles, setPortfolioFiles] = useState<Array<{ file: File; title: string; year: string }>>([]);
   const [existingPortfolio, setExistingPortfolio] = useState(artist?.portfolio || []);
+  const [salesDocuments, setSalesDocuments] = useState<File[]>([]);
+  const [existingSalesDocuments, setExistingSalesDocuments] = useState(
+    artist?.documents?.filter(doc => doc.category === 'sales') || []
+  );
+  const [otherDocuments, setOtherDocuments] = useState<File[]>([]);
+  const [existingOtherDocuments, setExistingOtherDocuments] = useState(
+    artist?.documents?.filter(doc => doc.category === 'other') || []
+  );
   const [formData, setFormData] = useState({
     name: artist?.name || '',
-    bio: artist?.bio || ''
+    bio: artist?.bio || '',
+    detailedBio: artist?.detailedBio || '',
+    website: artist?.website || '',
+    socialLinks: artist?.socialLinks || []
   });
 
   const { getRootProps: getMainImageProps, getInputProps: getMainImageInputProps } = useDropzone({
@@ -39,6 +50,16 @@ export default function ArtistForm({ artist, onClose, onSuccess }: ArtistFormPro
     }
   });
 
+  const { getRootProps: getSalesDocumentProps, getInputProps: getSalesDocumentInputProps } = useDropzone({
+    accept: { 'application/pdf': ['.pdf'] },
+    onDrop: (acceptedFiles) => setSalesDocuments(prev => [...prev, ...acceptedFiles])
+  });
+
+  const { getRootProps: getOtherDocumentProps, getInputProps: getOtherDocumentInputProps } = useDropzone({
+    accept: { 'application/pdf': ['.pdf'] },
+    onDrop: (acceptedFiles) => setOtherDocuments(prev => [...prev, ...acceptedFiles])
+  });
+
   const removePortfolioFile = (index: number) => {
     setPortfolioFiles(prev => prev.filter((_, i) => i !== index));
   };
@@ -47,16 +68,43 @@ export default function ArtistForm({ artist, onClose, onSuccess }: ArtistFormPro
     setExistingPortfolio(prev => prev.filter((_, i) => i !== index));
   };
 
-  const updatePortfolioFileMetadata = (index: number, field: 'title' | 'year', value: string) => {
-    setPortfolioFiles(prev => prev.map((item, i) => 
-      i === index ? { ...item, [field]: value } : item
-    ));
+  const removeSalesDocument = (index: number) => {
+    setSalesDocuments(prev => prev.filter((_, i) => i !== index));
   };
 
-  const updateExistingPortfolioMetadata = (index: number, field: 'title' | 'year', value: string) => {
-    setExistingPortfolio(prev => prev.map((item, i) => 
-      i === index ? { ...item, [field]: value } : item
-    ));
+  const removeExistingSalesDocument = (index: number) => {
+    setExistingSalesDocuments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeOtherDocument = (index: number) => {
+    setOtherDocuments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingOtherDocument = (index: number) => {
+    setExistingOtherDocuments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const addSocialLink = () => {
+    setFormData(prev => ({
+      ...prev,
+      socialLinks: [...prev.socialLinks, { platform: 'instagram', url: '' }]
+    }));
+  };
+
+  const removeSocialLink = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      socialLinks: prev.socialLinks.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateSocialLink = (index: number, field: 'platform' | 'url', value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      socialLinks: prev.socialLinks.map((link, i) => 
+        i === index ? { ...link, [field]: value } : link
+      )
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,7 +115,6 @@ export default function ArtistForm({ artist, onClose, onSuccess }: ArtistFormPro
     try {
       let mainImageUrl = artist?.mainImage || '';
       
-      // Upload main image if changed
       if (mainImage) {
         mainImageUrl = await uploadImage(mainImage, 'artists');
       }
@@ -80,13 +127,46 @@ export default function ArtistForm({ artist, onClose, onSuccess }: ArtistFormPro
         })
       );
       
-      // Combine existing and new portfolio items
+      // Upload new sales documents
+      const newSalesDocuments = await Promise.all(
+        salesDocuments.map(async (file) => {
+          const url = await uploadDocument(file);
+          return {
+            title: file.name.replace('.pdf', ''),
+            url,
+            type: 'pdf' as const,
+            category: 'sales' as const
+          };
+        })
+      );
+
+      // Upload new other documents
+      const newOtherDocuments = await Promise.all(
+        otherDocuments.map(async (file) => {
+          const url = await uploadDocument(file);
+          return {
+            title: file.name.replace('.pdf', ''),
+            url,
+            type: 'pdf' as const,
+            category: 'other' as const
+          };
+        })
+      );
+
+      // Combine existing and new items
       const portfolio = [...existingPortfolio, ...newPortfolioItems];
+      const allDocuments = [
+        ...existingSalesDocuments,
+        ...existingOtherDocuments,
+        ...newSalesDocuments,
+        ...newOtherDocuments
+      ];
 
       const artistData = {
         ...formData,
         mainImage: mainImageUrl,
-        portfolio
+        portfolio,
+        documents: allDocuments
       };
 
       if (artist) {
@@ -142,7 +222,7 @@ export default function ArtistForm({ artist, onClose, onSuccess }: ArtistFormPro
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Biography
+              Short Biography
             </label>
             <textarea
               required
@@ -151,6 +231,74 @@ export default function ArtistForm({ artist, onClose, onSuccess }: ArtistFormPro
               value={formData.bio}
               onChange={e => setFormData(prev => ({ ...prev, bio: e.target.value }))}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Detailed Biography
+            </label>
+            <textarea
+              rows={8}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              value={formData.detailedBio}
+              onChange={e => setFormData(prev => ({ ...prev, detailedBio: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Website
+            </label>
+            <input
+              type="url"
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              value={formData.website}
+              onChange={e => setFormData(prev => ({ ...prev, website: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Social Links
+            </label>
+            <div className="space-y-4">
+              {formData.socialLinks.map((link, index) => (
+                <div key={index} className="flex gap-4">
+                  <select
+                    value={link.platform}
+                    onChange={e => updateSocialLink(index, 'platform', e.target.value)}
+                    className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  >
+                    <option value="instagram">Instagram</option>
+                    <option value="twitter">Twitter</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="linkedin">LinkedIn</option>
+                  </select>
+                  <input
+                    type="url"
+                    value={link.url}
+                    onChange={e => updateSocialLink(index, 'url', e.target.value)}
+                    placeholder="URL"
+                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeSocialLink(index)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addSocialLink}
+                className="flex items-center text-indigo-600 hover:text-indigo-700"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Social Link
+              </button>
+            </div>
           </div>
 
           <div>
@@ -201,9 +349,10 @@ export default function ArtistForm({ artist, onClose, onSuccess }: ArtistFormPro
             </div>
           </div>
 
+          {/* Portfolio Section */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Portfolio
+              Portfolio Images
             </label>
             <div
               {...getPortfolioProps()}
@@ -214,85 +363,205 @@ export default function ArtistForm({ artist, onClose, onSuccess }: ArtistFormPro
               <p className="text-gray-600">Drop or click to add portfolio images</p>
             </div>
 
-            {/* Existing Portfolio Items */}
+            {/* Existing Portfolio */}
             {existingPortfolio.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Current Portfolio</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  {existingPortfolio.map((item, index) => (
-                    <div key={index} className="relative bg-gray-50 p-4 rounded-lg">
-                      <img
-                        src={item.imageUrl}
-                        alt={item.title}
-                        className="w-full h-48 object-cover rounded mb-2"
-                      />
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          placeholder="Title"
-                          value={item.title}
-                          onChange={(e) => updateExistingPortfolioMetadata(index, 'title', e.target.value)}
-                          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Year"
-                          value={item.year}
-                          onChange={(e) => updateExistingPortfolioMetadata(index, 'year', e.target.value)}
-                          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeExistingPortfolioItem(index)}
-                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                {existingPortfolio.map((item, index) => (
+                  <div key={index} className="relative bg-gray-50 p-4 rounded-lg">
+                    <img
+                      src={item.imageUrl}
+                      alt={item.title}
+                      className="w-full h-48 object-cover rounded mb-2"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Title"
+                      value={item.title}
+                      onChange={(e) => {
+                        const newPortfolio = [...existingPortfolio];
+                        newPortfolio[index].title = e.target.value;
+                        setExistingPortfolio(newPortfolio);
+                      }}
+                      className="w-full mb-2 rounded-md border-gray-300"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Year"
+                      value={item.year}
+                      onChange={(e) => {
+                        const newPortfolio = [...existingPortfolio];
+                        newPortfolio[index].year = e.target.value;
+                        setExistingPortfolio(newPortfolio);
+                      }}
+                      className="w-full rounded-md border-gray-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeExistingPortfolioItem(index)}
+                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 
             {/* New Portfolio Items */}
             {portfolioFiles.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">New Portfolio Items</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  {portfolioFiles.map((item, index) => (
-                    <div key={index} className="relative bg-gray-50 p-4 rounded-lg">
-                      <img
-                        src={URL.createObjectURL(item.file)}
-                        alt="Preview"
-                        className="w-full h-48 object-cover rounded mb-2"
-                      />
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          placeholder="Title"
-                          value={item.title}
-                          onChange={(e) => updatePortfolioFileMetadata(index, 'title', e.target.value)}
-                          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Year"
-                          value={item.year}
-                          onChange={(e) => updatePortfolioFileMetadata(index, 'year', e.target.value)}
-                          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removePortfolioFile(index)}
-                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                {portfolioFiles.map((item, index) => (
+                  <div key={index} className="relative bg-gray-50 p-4 rounded-lg">
+                    <img
+                      src={URL.createObjectURL(item.file)}
+                      alt="Preview"
+                      className="w-full h-48 object-cover rounded mb-2"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Title"
+                      value={item.title}
+                      onChange={(e) => {
+                        const newFiles = [...portfolioFiles];
+                        newFiles[index].title = e.target.value;
+                        setPortfolioFiles(newFiles);
+                      }}
+                      className="w-full mb-2 rounded-md border-gray-300"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Year"
+                      value={item.year}
+                      onChange={(e) => {
+                        const newFiles = [...portfolioFiles];
+                        newFiles[index].year = e.target.value;
+                        setPortfolioFiles(newFiles);
+                      }}
+                      className="w-full rounded-md border-gray-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePortfolioFile(index)}
+                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sales Documents Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Verkaufsunterlagen
+            </label>
+            <div
+              {...getSalesDocumentProps()}
+              className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors cursor-pointer"
+            >
+              <input {...getSalesDocumentInputProps()} />
+              <FileText className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="text-gray-600">Drop or click to add sales documents (PDF)</p>
+            </div>
+
+            {/* Existing Sales Documents */}
+            {existingSalesDocuments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {existingSalesDocuments.map((doc, index) => (
+                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                    <div className="flex items-center">
+                      <FileText className="h-5 w-5 text-gray-400 mr-2" />
+                      <span>{doc.title}</span>
                     </div>
-                  ))}
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => removeExistingSalesDocument(index)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* New Sales Documents */}
+            {salesDocuments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {salesDocuments.map((doc, index) => (
+                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                    <div className="flex items-center">
+                      <FileText className="h-5 w-5 text-gray-400 mr-2" />
+                      <span>{doc.name}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeSalesDocument(index)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Other Documents Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Other Documents
+            </label>
+            <div
+              {...getOtherDocumentProps()}
+              className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors cursor-pointer"
+            >
+              <input {...getOtherDocumentInputProps()} />
+              <FileText className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="text-gray-600">Drop or click to add other documents (PDF)</p>
+            </div>
+
+            {/* Existing Other Documents */}
+            {existingOtherDocuments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {existingOtherDocuments.map((doc, index) => (
+                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                    <div className="flex items-center">
+                      <FileText className="h-5 w-5 text-gray-400 mr-2" />
+                      <span>{doc.title}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeExistingOtherDocument(index)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* New Other Documents */}
+            {otherDocuments.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {otherDocuments.map((doc, index) => (
+                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                    <div className="flex items-center">
+                      <FileText className="h-5 w-5 text-gray-400 mr-2" />
+                      <span>{doc.name}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeOtherDocument(index)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
