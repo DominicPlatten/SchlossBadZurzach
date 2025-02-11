@@ -39,5 +39,6 @@ export const COLLECTIONS = {
   ARTISTS: 'artists',
   USERS: 'users',
   ART_LOCATIONS: 'artLocations',
-  MAP_CONTENT: 'mapContent'
+  MAP_CONTENT: 'mapContent',
+  HISTORY_CONTENT: 'historyContent'
 } as const;

@@ -92,7 +92,7 @@ export default function Home() {
 
       {/* Welcome Section */}
       <div className="prose max-w-none">
-        <div className="bg-white rounded-lg shadow-sm p-8">
+        <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="max-w-3xl mx-auto">
             <div className="text-gray-700 space-y-6 whitespace-pre-line">
               {`Lassen Sie sich von der einzigartigen Atmosphäre im Park Himmelrych verzaubern.

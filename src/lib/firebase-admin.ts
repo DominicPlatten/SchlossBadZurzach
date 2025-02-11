@@ -348,3 +348,38 @@ export const updateMapContent = async (id: string, data: Partial<MapContent>) =>
     updatedAt: serverTimestamp(),
   });
 };
+
+export const getHistoryContent = async (): Promise<HistoryContent | null> => {
+  try {
+    const historyRef = collection(db, COLLECTIONS.HISTORY_CONTENT);
+    const snapshot = await getDocs(historyRef);
+    
+    if (snapshot.empty) return null;
+    
+    const doc = snapshot.docs[0];
+    return {
+      id: doc.id,
+      ...doc.data()
+    } as HistoryContent;
+  } catch (error) {
+    console.error('Error fetching history content:', error);
+    throw error;
+  }
+};
+
+export const createHistoryContent = async (data: Omit<HistoryContent, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+  const historyRef = await addDoc(collection(db, COLLECTIONS.HISTORY_CONTENT), {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return historyRef.id;
+};
+
+export const updateHistoryContent = async (id: string, data: Partial<HistoryContent>) => {
+  const historyRef = doc(db, COLLECTIONS.HISTORY_CONTENT, id);
+  await updateDoc(historyRef, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  });
+};

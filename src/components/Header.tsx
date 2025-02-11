@@ -20,6 +20,7 @@ export default function Header() {
                 <Link to="/" className="text-gray-700 hover:text-indigo-600 whitespace-nowrap">Ausstellungen</Link>
                 <Link to="/map" className="text-gray-700 hover:text-indigo-600 whitespace-nowrap">Karte</Link>
                 <Link to="/artists" className="text-gray-700 hover:text-indigo-600 whitespace-nowrap">Künstler</Link>
+                <Link to="/history" className="text-gray-700 hover:text-indigo-600 whitespace-nowrap">Geschichte</Link>
               </div>
             </div>
           </div>

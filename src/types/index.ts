@@ -79,3 +79,15 @@ export interface MapContent {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface HistoryContent {
+  id: string;
+  mainText: string;
+  milestones: {
+    year: number;
+    title: string;
+    description: string;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}
