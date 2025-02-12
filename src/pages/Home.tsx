@@ -91,9 +91,9 @@ export default function Home() {
       )}
 
       {/* Welcome Section */}
-      <div className="prose max-w-none">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="max-w-3xl mx-auto">
+      <div className="prose max-w-none w-full">
+        <div className="bg-white w-full">
+          <div className="px-4 sm:px-6 lg:px-8"> 
             <div className="text-gray-700 space-y-6 whitespace-pre-line">
               {`Lassen Sie sich von der einzigartigen Atmosphäre im Park Himmelrych verzaubern.
 
@@ -110,7 +110,7 @@ Der Park Himmelrych ist öffentlich zugänglich und der Eintritt ist frei, damit
               className="mt-8 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               <MapPin className="h-5 w-5 mr-2" />
-              Auf Google Maps anzeigen
+              Google Maps
             </button>
           </div>
         </div>

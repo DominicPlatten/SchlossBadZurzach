@@ -105,10 +105,9 @@ export default function History() {
                     <div key={index} className="bg-white rounded-lg shadow-sm p-6">
                       <div className="max-w-3xl mx-auto">
                         <div className="flex items-start">
-                          <div className="text-3xl font-bold text-indigo-600 w-32 flex-shrink-0">
-                            {milestone.year}
-                          </div>
                           <div>
+                            <p className="text-3xl font-bold text-indigo-600 w-32 flex-shrink-0">
+                          {milestone.year}</p>
                             <h3 className="text-xl font-semibold mb-3">{milestone.title}</h3>
                             <p className="text-gray-600">{milestone.description}</p>
                           </div>
