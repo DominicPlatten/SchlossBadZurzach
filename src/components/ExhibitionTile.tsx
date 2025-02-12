@@ -8,18 +8,24 @@ interface ExhibitionTileProps {
 
 export default function ExhibitionTile({ exhibition }: ExhibitionTileProps) {
   return (
-    <Link to={`/exhibition/${exhibition.id}`} className="group">
-      <div className="relative overflow-hidden rounded-lg">
-        <img
-          src={exhibition.mainImage}
-          alt={exhibition.title}
-          className="w-full h-64 object-cover transform group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-          <h3 className="text-white font-semibold text-xl">{exhibition.title}</h3>
-          <p className="text-gray-200 text-sm">
-            {new Date(exhibition.startDate).toLocaleDateString()} - {new Date(exhibition.endDate).toLocaleDateString()}
-          </p>
+    <Link to={`/exhibition/${exhibition.id}`} className="group block">
+      <div className="bg-gray-100 rounded-lg shadow-sm overflow-hidden">
+        <div className="relative aspect-[16/9]">
+          <img
+            src={exhibition.mainImage}
+            alt={exhibition.title}
+            className="absolute inset-0 w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-6">
+            <h3 className="text-xl font-semibold text-white mb-2">
+              {exhibition.title}
+            </h3>
+            <p className="text-gray-200 line-clamp-2 mb-2">{exhibition.shortDescription}</p>
+            <p className="text-sm text-gray-300">
+              {new Date(exhibition.startDate).toLocaleDateString()} - {new Date(exhibition.endDate).toLocaleDateString()}
+            </p>
+          </div>
         </div>
       </div>
     </Link>

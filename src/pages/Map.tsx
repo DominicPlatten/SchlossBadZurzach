@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getArtLocations, getArtists, getMapUrl, getMapContent } from '../lib/firebase-admin';
-import { Loader2, X, WifiOff, RefreshCw, Info, MapPin, Clock, Phone, Mail, Car, Train } from 'lucide-react';
+import { Loader2, X, WifiOff, RefreshCw, Info, MapPin, Clock, Phone, Mail, Car, Train, FileText } from 'lucide-react';
 import type { ArtLocation, Artist, MapContent } from '../types';
 
 export default function Map() {
@@ -204,17 +204,35 @@ export default function Map() {
                 
                 {/* Location Points */}
                 {locations.map((location) => (
-                  <button
+                  <div
                     key={location.id}
-                    onClick={() => setSelectedLocation(location)}
-                    className="absolute w-6 h-6 transform -translate-x-1/2 -translate-y-1/2 bg-indigo-600 rounded-full border-2 border-white shadow-lg hover:bg-indigo-700 transition-colors"
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2"
                     style={{
                       left: `${location.coordinates.x}%`,
                       top: `${location.coordinates.y}%`,
                     }}
                   >
-                    <span className="sr-only">View {location.title}</span>
-                  </button>
+                    {/* Pulsing background */}
+                    <div className="absolute -inset-4">
+                      <div className="w-8 h-8 rounded-full bg-indigo-400/30 animate-ping" />
+                    </div>
+                    
+                    {/* Main marker */}
+                    <button
+                      onClick={() => setSelectedLocation(location)}
+                      className="relative w-6 h-6 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 border-2 border-white shadow-lg hover:from-indigo-600 hover:to-indigo-700 transition-all duration-300 hover:scale-110 group"
+                    >
+                      <span className="sr-only">View {location.title}</span>
+                      
+                      {/* Tooltip */}
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                        <div className="bg-white px-2 py-1 rounded shadow-lg text-sm whitespace-nowrap">
+                          {location.title}
+                        </div>
+                        <div className="w-2 h-2 bg-white transform rotate-45 translate-x-[calc(50%-4px)] translate-y-[-4px] absolute left-1/2 bottom-0" />
+                      </div>
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -277,6 +295,20 @@ export default function Map() {
                 <div className="p-6">
                   <h2 className="text-2xl font-bold mb-2">{selectedLocation.title}</h2>
                   <p className="text-gray-600 mb-4">{selectedLocation.description}</p>
+                  
+                  {/* Document Link */}
+                  {selectedLocation.documentUrl && (
+                    <a
+                      href={selectedLocation.documentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center space-x-2 text-indigo-600 hover:text-indigo-800 mb-4"
+                    >
+                      <FileText className="h-5 w-5" />
+                      <span>{selectedLocation.documentTitle || 'View Document'}</span>
+                    </a>
+                  )}
+                  
                   {selectedLocation.artistId && (
                     <div className="flex items-center">
                       {getArtist(selectedLocation.artistId) && (

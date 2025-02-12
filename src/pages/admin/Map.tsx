@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { PlusCircle, Pencil, Trash2, AlertCircle, Upload, X, ChevronDown, Check } from 'lucide-react';
-import { getArtLocations, createArtLocation, updateArtLocation, deleteArtLocation, uploadImage, getArtists, getMapContent, updateMapContent, createMapContent } from '../../lib/firebase-admin';
+import { PlusCircle, Pencil, Trash2, AlertCircle, Upload, X, ChevronDown, Check, FileText } from 'lucide-react';
+import { getArtLocations, createArtLocation, updateArtLocation, deleteArtLocation, uploadImage, uploadDocument, getArtists, getMapContent, updateMapContent, createMapContent } from '../../lib/firebase-admin';
 import type { ArtLocation, Artist, MapContent } from '../../types';
 
 const MAP_URL = 'https://raw.githubusercontent.com/dominicplatten/SchlossBadZurzach/main/map.png';
@@ -14,6 +14,7 @@ interface LocationFormData {
     x: number;
     y: number;
   };
+  documentTitle?: string;
 }
 
 export default function AdminMap() {
@@ -31,6 +32,7 @@ export default function AdminMap() {
     coordinates: { x: 0, y: 0 }
   });
   const [artworkImage, setArtworkImage] = useState<File | null>(null);
+  const [document, setDocument] = useState<File | null>(null);
   const [mapImage, setMapImage] = useState<File | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [placingMarker, setPlacingMarker] = useState(false);
@@ -45,6 +47,12 @@ export default function AdminMap() {
     accept: { 'image/*': [] },
     maxFiles: 1,
     onDrop: (acceptedFiles) => setArtworkImage(acceptedFiles[0])
+  });
+
+  const { getRootProps: getDocumentProps, getInputProps: getDocumentInputProps } = useDropzone({
+    accept: { 'application/pdf': ['.pdf'] },
+    maxFiles: 1,
+    onDrop: (acceptedFiles) => setDocument(acceptedFiles[0])
   });
 
   const { getRootProps: getMapProps, getInputProps: getMapInputProps } = useDropzone({
@@ -113,9 +121,16 @@ export default function AdminMap() {
         artworkImageUrl = await uploadImage(artworkImage, 'artLocations');
       }
 
+      let documentUrl = selectedLocation?.documentUrl;
+      if (document) {
+        documentUrl = await uploadDocument(document);
+      }
+
       const locationData = {
         ...formData,
         imageUrl: artworkImageUrl,
+        documentUrl,
+        documentTitle: formData.documentTitle
       };
 
       if (selectedLocation) {
@@ -148,6 +163,7 @@ export default function AdminMap() {
       coordinates: { x: 0, y: 0 }
     });
     setArtworkImage(null);
+    setDocument(null);
     setMapImage(null);
     setPlacingMarker(false);
     setShowArtistDropdown(false);
@@ -159,7 +175,8 @@ export default function AdminMap() {
       title: location.title,
       description: location.description,
       artistId: location.artistId,
-      coordinates: location.coordinates
+      coordinates: location.coordinates,
+      documentTitle: location.documentTitle
     });
     setShowForm(true);
   };
@@ -409,6 +426,62 @@ export default function AdminMap() {
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Document (PDF)
+                    </label>
+                    <div
+                      {...getDocumentProps()}
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors cursor-pointer"
+                    >
+                      <input {...getDocumentInputProps()} />
+                      {document ? (
+                        <div className="flex items-center justify-center">
+                          <FileText className="h-12 w-12 text-gray-400" />
+                          <span className="ml-2">{document.name}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDocument(null);
+                            }}
+                            className="ml-2 text-red-600 hover:text-red-800"
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
+                        </div>
+                      ) : selectedLocation?.documentUrl ? (
+                        <div className="flex items-center justify-center">
+                          <FileText className="h-12 w-12 text-gray-400" />
+                          <span className="ml-2">Current document</span>
+                          <div className="ml-4 text-gray-600">
+                            <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                            <p>Drop or click to replace document</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-gray-600">
+                          <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                          <p>Drop or click to select PDF document</p>
+                        </div>
+                      )}
+                    </div>
+                    {(document || selectedLocation?.documentUrl) && (
+                      <div className="mt-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Document Title
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                          value={formData.documentTitle || ''}
+                          onChange={e => setFormData(prev => ({ ...prev, documentTitle: e.target.value }))}
+                          placeholder="Enter document title"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, AlertCircle, Image as ImageIcon, ChevronDown, Check } from 'lucide-react';
+import { Upload, X, AlertCircle, Image as ImageIcon, ChevronDown, Check, Plus, GripVertical } from 'lucide-react';
 import { uploadImage, createExhibition, updateExhibition, getArtists } from '../../lib/firebase-admin';
 import type { Exhibition, Artist } from '../../types';
 
@@ -30,6 +30,9 @@ export default function ExhibitionForm({ exhibition, onClose, onSuccess }: Exhib
       hours: exhibition?.visitorInfo?.hours || '',
       ticketInfo: exhibition?.visitorInfo?.ticketInfo || '',
       location: exhibition?.visitorInfo?.location || ''
+    },
+    additionalInfo: {
+      sections: exhibition?.additionalInfo?.sections || []
     }
   });
 
@@ -73,6 +76,58 @@ export default function ExhibitionForm({ exhibition, onClose, onSuccess }: Exhib
         ? prev.artistIds.filter(id => id !== artistId)
         : [...prev.artistIds, artistId]
     }));
+  };
+
+  const addInfoSection = () => {
+    setFormData(prev => ({
+      ...prev,
+      additionalInfo: {
+        sections: [
+          ...prev.additionalInfo.sections,
+          {
+            title: '',
+            content: '',
+            order: prev.additionalInfo.sections.length
+          }
+        ]
+      }
+    }));
+  };
+
+  const removeInfoSection = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      additionalInfo: {
+        sections: prev.additionalInfo.sections.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const updateInfoSection = (index: number, field: 'title' | 'content', value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      additionalInfo: {
+        sections: prev.additionalInfo.sections.map((section, i) =>
+          i === index ? { ...section, [field]: value } : section
+        )
+      }
+    }));
+  };
+
+  const moveInfoSection = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= formData.additionalInfo.sections.length) return;
+
+    setFormData(prev => {
+      const sections = [...prev.additionalInfo.sections];
+      const [removed] = sections.splice(fromIndex, 1);
+      sections.splice(toIndex, 0, removed);
+      return {
+        ...prev,
+        additionalInfo: {
+          sections: sections.map((section, index) => ({ ...section, order: index }))
+        }
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -434,6 +489,81 @@ export default function ExhibitionForm({ exhibition, onClose, onSuccess }: Exhib
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">Additional Information</h3>
+                <button
+                  type="button"
+                  onClick={addInfoSection}
+                  className="flex items-center space-x-2 text-sm text-indigo-600 hover:text-indigo-800"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Add Section</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {formData.additionalInfo.sections.map((section, index) => (
+                  <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-start space-x-4">
+                      <button
+                        type="button"
+                        className="mt-2 cursor-move text-gray-400 hover:text-gray-600"
+                        onMouseDown={(e) => {
+                          // Handle drag and drop reordering
+                          const startY = e.pageY;
+                          const startIndex = index;
+                          
+                          const handleMouseMove = (e: MouseEvent) => {
+                            const currentY = e.pageY;
+                            const diff = Math.round((currentY - startY) / 50); // 50px per item
+                            if (diff !== 0) {
+                              moveInfoSection(startIndex, startIndex + diff);
+                            }
+                          };
+                          
+                          const handleMouseUp = () => {
+                            document.removeEventListener('mousemove', handleMouseMove);
+                            document.removeEventListener('mouseup', handleMouseUp);
+                          };
+                          
+                          document.addEventListener('mousemove', handleMouseMove);
+                          document.addEventListener('mouseup', handleMouseUp);
+                        }}
+                      >
+                        <GripVertical className="h-5 w-5" />
+                      </button>
+                      <div className="flex-grow space-y-3">
+                        <input
+                          type="text"
+                          placeholder="Section Title"
+                          value={section.title}
+                          onChange={(e) => updateInfoSection(index, 'title', e.target.value)}
+                          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+                        <textarea
+                          placeholder="Section Content"
+                          value={section.content}
+                          onChange={(e) => updateInfoSection(index, 'content', e.target.value)}
+                          rows={4}
+                          className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeInfoSection(index)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="flex justify-end space-x-4">

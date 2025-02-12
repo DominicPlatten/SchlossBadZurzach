@@ -22,6 +22,13 @@ export interface Exhibition {
     ticketInfo: string;
     location: string;
   };
+  additionalInfo?: {
+    sections: Array<{
+      title: string;
+      content: string;
+      order: number;
+    }>;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -39,14 +46,13 @@ export interface Artist {
   exhibitions: string[];
   createdAt: string;
   updatedAt: string;
-  // Artist details
   detailedBio?: string;
   website?: string;
   documents?: {
     title: string;
     url: string;
     type: 'pdf';
-    category: 'sales' | 'other'; // Add category field
+    category: 'sales' | 'other';
   }[];
   socialLinks?: {
     platform: 'instagram' | 'facebook' | 'twitter' | 'linkedin';
@@ -64,6 +70,8 @@ export interface ArtLocation {
     x: number;
     y: number;
   };
+  documentUrl?: string;
+  documentTitle?: string;
   createdAt: string;
   updatedAt: string;
 }

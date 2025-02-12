@@ -169,6 +169,24 @@ export default function Exhibition() {
               </div>
             </div>
           )}
+
+          {/* Additional Information Sections */}
+          {exhibition.additionalInfo?.sections && exhibition.additionalInfo.sections.length > 0 && (
+            <div className="mt-12">
+              {exhibition.additionalInfo.sections
+                .sort((a, b) => a.order - b.order)
+                .map((section, index) => (
+                  <div key={index} className="mb-8">
+                    <h2 className="text-2xl font-bold mb-4">{section.title}</h2>
+                    <div className="prose max-w-none">
+                      <div className="text-gray-700 whitespace-pre-line">
+                        {section.content}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
 
         {/* Visitor Information Sidebar */}
