@@ -85,9 +85,12 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {regularExhibitions.length > 0 && (
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">Ausstellungen</h2>
-            <div className="space-y-10 max-w-3xl">
+          <div className="mb-12 flex flex-col items-center">
+            {/* Title now shares the same width as tiles */}
+            <h2 className="text-2xl font-bold mb-6 w-full lg:w-2/3">Ausstellungen</h2>
+
+            {/* Exhibition tiles aligned properly */}
+            <div className="space-y-10 w-full lg:w-2/3">
               {regularExhibitions.map(exhibition => (
                 <ExhibitionTile key={exhibition.id} exhibition={exhibition} />
               ))}
