@@ -5,6 +5,7 @@ import { db, COLLECTIONS } from '../lib/firebase';
 import { Loader2, WifiOff, RefreshCw, Globe, FileText, Instagram, Facebook, Twitter, Linkedin } from 'lucide-react';
 import ImageViewer from '../components/ImageViewer';
 import ExhibitionTile from '../components/ExhibitionTile';
+import Carousel from '../components/Carousel';
 import type { Artist as ArtistType, Exhibition } from '../types';
 
 const SocialIcon = ({ platform }: { platform: string }) => {
@@ -138,6 +139,8 @@ export default function Artist() {
     );
   }
 
+  const portfolioImages = artist.portfolio?.map(work => work.imageUrl) || [];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {isOffline && (
@@ -190,54 +193,6 @@ export default function Artist() {
               )}
             </div>
           )}
-
-          {artist.documents && artist.documents.length > 0 && (
-            <div className="mt-6">
-              {artist.documents.filter(doc => doc.category === 'sales').length > 0 && (
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold mb-3">Verkaufsunterlagen</h3>
-                  <div className="space-y-2">
-                    {artist.documents
-                      .filter(doc => doc.category === 'sales')
-                      .map((doc, index) => (
-                        <a
-                          key={index}
-                          href={doc.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-800"
-                        >
-                          <FileText className="h-5 w-5" />
-                          <span>{doc.title}</span>
-                        </a>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {artist.documents.filter(doc => doc.category === 'other').length > 0 && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">Documents</h3>
-                  <div className="space-y-2">
-                    {artist.documents
-                      .filter(doc => doc.category === 'other')
-                      .map((doc, index) => (
-                        <a
-                          key={index}
-                          href={doc.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-800"
-                        >
-                          <FileText className="h-5 w-5" />
-                          <span>{doc.title}</span>
-                        </a>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
         
         <div className="lg:col-span-2">
@@ -256,34 +211,76 @@ export default function Artist() {
       {artist.portfolio && artist.portfolio.length > 0 && (
         <div className="mb-12">
           <h2 className="text-2xl font-bold mb-6">Portfolio</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {artist.portfolio.map((work, index) => (
-              <div key={index} className="group cursor-pointer" onClick={() => setSelectedImage(work.imageUrl)}>
-                <div className="relative aspect-[4/3] rounded-lg overflow-hidden">
-                  <img
-                    src={work.imageUrl}
-                    alt={work.title}
-                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div className="mt-2">
-                  <h3 className="font-semibold text-gray-900">{work.title}</h3>
-                  <p className="text-sm text-gray-500">{work.year}</p>
-                </div>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 gap-6">
+            <Carousel 
+              images={portfolioImages}
+              onImageClick={setSelectedImage}
+            />
           </div>
         </div>
       )}
 
       {exhibitions.length > 0 && (
-        <div>
+        <div className="mb-12">
           <h2 className="text-2xl font-bold mb-6">Exhibitions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {exhibitions.map(exhibition => (
               <ExhibitionTile key={exhibition.id} exhibition={exhibition} />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Documents Section */}
+      {artist.documents && artist.documents.length > 0 && (
+        <div>
+          {artist.documents.filter(doc => doc.category === 'sales').length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-4">Verkaufsunterlagen</h2>
+              <div className="">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {artist.documents
+                    .filter(doc => doc.category === 'sales')
+                    .map((doc, index) => (
+                      <a
+                        key={index}
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-800 p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <FileText className="h-5 w-5 flex-shrink-0" />
+                        <span className="truncate">{doc.title}</span>
+                      </a>
+                    ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {artist.documents.filter(doc => doc.category === 'other').length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-4">Documents</h2>
+              <div className="">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {artist.documents
+                    .filter(doc => doc.category === 'other')
+                    .map((doc, index) => (
+                      <a
+                        key={index}
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-800 p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <FileText className="h-5 w-5 flex-shrink-0" />
+                        <span className="truncate">{doc.title}</span>
+                      </a>
+                    ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

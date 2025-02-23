@@ -4,6 +4,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db, COLLECTIONS } from '../lib/firebase';
 import { Loader2, Clock, Ticket, MapPin, WifiOff, RefreshCw } from 'lucide-react';
 import ImageViewer from '../components/ImageViewer';
+import Carousel from '../components/Carousel';
 import type { Exhibition } from '../types';
 
 export default function Exhibition() {
@@ -134,7 +135,7 @@ export default function Exhibition() {
         <div className="absolute bottom-0 left-0 right-0 p-8">
           <h1 className="text-4xl font-bold text-white mb-4">{exhibition.title}</h1>
           <p className="text-xl text-gray-200 mb-4">{exhibition.shortDescription}</p>
-          <p className="text-gray-300 text-lg">
+          <p className="text-lg text-gray-300">
             {new Date(exhibition.startDate).toLocaleDateString()} - {new Date(exhibition.endDate).toLocaleDateString()}
           </p>
         </div>
@@ -152,21 +153,10 @@ export default function Exhibition() {
           {exhibition.gallery && exhibition.gallery.length > 0 && (
             <div>
               <h2 className="text-2xl font-bold mb-6">Gallery</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {exhibition.gallery.map((image, index) => (
-                  <div 
-                    key={index} 
-                    className="relative aspect-[4/3] cursor-pointer group"
-                    onClick={() => setSelectedImage(image)}
-                  >
-                    <img
-                      src={image}
-                      alt={`Gallery image ${index + 1}`}
-                      className="w-full h-full object-cover rounded-lg group-hover:opacity-90 transition-opacity"
-                    />
-                  </div>
-                ))}
-              </div>
+              <Carousel 
+                images={exhibition.gallery} 
+                onImageClick={setSelectedImage}
+              />
             </div>
           )}
 
