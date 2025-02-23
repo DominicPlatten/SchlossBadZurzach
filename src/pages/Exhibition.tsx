@@ -72,7 +72,7 @@ export default function Exhibition() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex justify-center items-center h-[60vh]">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
         </div>
@@ -82,7 +82,7 @@ export default function Exhibition() {
 
   if (error || !exhibition) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-red-50 p-6 rounded-lg">
           <div className="flex items-center space-x-3">
             {isOffline ? (
@@ -113,7 +113,7 @@ export default function Exhibition() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {isOffline && (
         <div className="mb-4 bg-yellow-50 p-4 rounded-lg">
           <div className="flex items-center space-x-3">
@@ -141,49 +141,12 @@ export default function Exhibition() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* Main Content */}
-        <div className="lg:col-span-2">
-          <h2 className="text-2xl font-bold mb-6">About the Exhibition</h2>
-          <p className="text-gray-700 text-lg leading-relaxed mb-8">
-            {exhibition.description}
-          </p>
-
-          {/* Gallery */}
-          {exhibition.gallery && exhibition.gallery.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-bold mb-6">Gallery</h2>
-              <Carousel 
-                images={exhibition.gallery} 
-                onImageClick={setSelectedImage}
-              />
-            </div>
-          )}
-
-          {/* Additional Information Sections */}
-          {exhibition.additionalInfo?.sections && exhibition.additionalInfo.sections.length > 0 && (
-            <div className="mt-12">
-              {exhibition.additionalInfo.sections
-                .sort((a, b) => a.order - b.order)
-                .map((section, index) => (
-                  <div key={index} className="mb-8">
-                    <h2 className="text-2xl font-bold mb-4">{section.title}</h2>
-                    <div className="prose max-w-none">
-                      <div className="text-gray-700 whitespace-pre-line">
-                        {section.content}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-
-        {/* Visitor Information Sidebar */}
-        {exhibition.visitorInfo && (
-          <div className="bg-gray-50 p-6 rounded-lg h-fit">
+      {/* Visitor Information */}
+      {exhibition.visitorInfo && (
+        <div className="mb-12">
+          <div className="max-w-5xl mx-auto bg-gray-50 p-6 rounded-lg">
             <h2 className="text-xl font-bold mb-6">Visitor Information</h2>
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {exhibition.visitorInfo.hours && (
                 <div className="flex items-start space-x-3">
                   <Clock className="h-6 w-6 text-indigo-600 flex-shrink-0 mt-1" />
@@ -214,6 +177,43 @@ export default function Exhibition() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6">About the Exhibition</h2>
+        <p className="text-gray-700 text-lg leading-relaxed mb-8">
+          {exhibition.description}
+        </p>
+
+        {/* Gallery */}
+        {exhibition.gallery && exhibition.gallery.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6">Gallery</h2>
+            <Carousel 
+              images={exhibition.gallery} 
+              onImageClick={setSelectedImage}
+            />
+          </div>
+        )}
+
+        {/* Additional Information Sections */}
+        {exhibition.additionalInfo?.sections && exhibition.additionalInfo.sections.length > 0 && (
+          <div className="mt-12">
+            {exhibition.additionalInfo.sections
+              .sort((a, b) => a.order - b.order)
+              .map((section, index) => (
+                <div key={index} className="mb-8">
+                  <h2 className="text-2xl font-bold mb-4">{section.title}</h2>
+                  <div className="prose max-w-none">
+                    <div className="text-gray-700 whitespace-pre-line">
+                      {section.content}
+                    </div>
+                  </div>
+                </div>
+              ))}
           </div>
         )}
       </div>
