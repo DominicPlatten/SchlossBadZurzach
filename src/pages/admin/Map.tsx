@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { PlusCircle, Pencil, Trash2, AlertCircle, Upload, X, ChevronDown, Check, FileText } from 'lucide-react';
-import { getArtLocations, createArtLocation, updateArtLocation, deleteArtLocation, uploadImage, uploadDocument, getArtists, getMapContent, updateMapContent, createMapContent } from '../../lib/firebase-admin';
+import { getArtLocations, createArtLocation, updateArtLocation, deleteArtLocation, uploadImage, uploadDocument, getArtists, getMapContent, updateMapContent, createMapContent, getMapUrl } from '../../lib/firebase-admin';
 import type { ArtLocation, Artist, MapContent } from '../../types';
-
-const MAP_URL = 'https://raw.githubusercontent.com/dominicplatten/SchlossBadZurzach/main/map.png';
 
 interface LocationFormData {
   title: string;
@@ -34,6 +32,7 @@ export default function AdminMap() {
   const [artworkImage, setArtworkImage] = useState<File | null>(null);
   const [document, setDocument] = useState<File | null>(null);
   const [mapImage, setMapImage] = useState<File | null>(null);
+  const [currentMapUrl, setCurrentMapUrl] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [placingMarker, setPlacingMarker] = useState(false);
   const [mapContent, setMapContent] = useState<MapContent | null>(null);
@@ -65,13 +64,15 @@ export default function AdminMap() {
     try {
       setLoading(true);
       setError(null);
-      const [locationsData, artistsData, mapContentData] = await Promise.all([
+      const [locationsData, artistsData, mapUrlData, mapContentData] = await Promise.all([
         getArtLocations(),
         getArtists(),
+        getMapUrl(),
         getMapContent()
       ]);
       setLocations(locationsData);
       setArtists(artistsData);
+      setCurrentMapUrl(mapUrlData);
       setMapContent(mapContentData);
       if (mapContentData) {
         setMapContentFormData({
@@ -510,7 +511,7 @@ export default function AdminMap() {
                         onClick={handleMapClick}
                       >
                         <img
-                          src={MAP_URL}
+                          src={currentMapUrl || '/placeholder-map.jpg'}
                           alt="Museum Map"
                           className="w-full h-full object-cover"
                         />

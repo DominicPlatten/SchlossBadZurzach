@@ -202,7 +202,6 @@ export default function Map() {
                   </div>
                 )}
                 
-                {/* Location Points */}
                 {locations.map((location) => (
                   <div
                     key={location.id}
@@ -210,23 +209,17 @@ export default function Map() {
                     style={{
                       left: `${location.coordinates.x}%`,
                       top: `${location.coordinates.y}%`,
+                      zIndex: 20,
                     }}
                   >
-                    {/* Pulsing background */}
-                    <div className="absolute -inset-4">
-                      <div className="w-8 h-8 rounded-full bg-indigo-400/30 animate-ping" />
-                    </div>
-                    
-                    {/* Main marker */}
                     <button
                       onClick={() => setSelectedLocation(location)}
                       className="relative w-6 h-6 rounded-full bg-gradient-to-r from-indigo-500 to-indigo-600 border-2 border-white shadow-lg hover:from-indigo-600 hover:to-indigo-700 transition-all duration-300 hover:scale-110 group"
                     >
                       <span className="sr-only">View {location.title}</span>
                       
-                      {/* Tooltip */}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                        <div className="bg-white px-2 py-1 rounded shadow-lg text-sm whitespace-nowrap">
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-30">
+                        <div className="bg-white px-3 py-2 rounded-lg shadow-lg text-sm whitespace-nowrap">
                           {location.title}
                         </div>
                         <div className="w-2 h-2 bg-white transform rotate-45 translate-x-[calc(50%-4px)] translate-y-[-4px] absolute left-1/2 bottom-0" />
@@ -237,7 +230,6 @@ export default function Map() {
               </div>
             </div>
 
-            {/* Park Description */}
             {mapContent?.parkDescription && (
               <div className="mt-8 prose max-w-none">
                 <div className="whitespace-pre-line text-gray-700">
@@ -246,7 +238,6 @@ export default function Map() {
               </div>
             )}
 
-            {/* Legend */}
             {mapContent?.legend && mapContent.legend.length > 0 && (
               <div className="mt-8">
                 <h2 className="text-2xl font-bold mb-4">Legende</h2>
@@ -275,7 +266,6 @@ export default function Map() {
             )}
           </div>
 
-          {/* Location Details Modal */}
           {selectedLocation && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-lg max-w-lg w-full overflow-hidden">
@@ -296,7 +286,6 @@ export default function Map() {
                   <h2 className="text-2xl font-bold mb-2">{selectedLocation.title}</h2>
                   <p className="text-gray-600 mb-4">{selectedLocation.description}</p>
                   
-                  {/* Document Link */}
                   {selectedLocation.documentUrl && (
                     <a
                       href={selectedLocation.documentUrl}

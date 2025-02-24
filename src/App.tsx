@@ -16,10 +16,12 @@ import AdminExhibitions from './pages/admin/Exhibitions';
 import AdminArtists from './pages/admin/Artists';
 import AdminMap from './pages/admin/Map';
 import AdminHistoryContent from './pages/admin/HistoryContent';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="min-h-screen flex flex-col">
         <Routes>
           {/* Public Routes */}
