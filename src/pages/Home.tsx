@@ -21,7 +21,11 @@ export default function Home() {
         ]);
         
         setFeaturedExhibition(featured);
-        setRegularExhibitions(allExhibitions.filter(ex => !ex.isFeatured));
+        setRegularExhibitions(
+          allExhibitions
+            .filter(ex => !ex.isFeatured)
+            .sort((a, b) => (a.order || 0) - (b.order || 0))
+        );
       } catch (err) {
         console.error('Failed to load exhibitions:', err);
         setError('Failed to load exhibitions');
@@ -86,10 +90,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {regularExhibitions.length > 0 && (
           <div className="mb-12 flex flex-col items-center">
-            {/* Title now shares the same width as tiles */}
             <h2 className="text-2xl font-bold mb-6 w-full lg:w-2/3">Ausstellungen</h2>
-
-            {/* Exhibition tiles aligned properly */}
             <div className="space-y-10 w-full lg:w-2/3">
               {regularExhibitions.map(exhibition => (
                 <ExhibitionTile key={exhibition.id} exhibition={exhibition} />
@@ -98,7 +99,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Welcome Section */}
         <div className="prose max-w-none">
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="max-w-3xl mx-auto">

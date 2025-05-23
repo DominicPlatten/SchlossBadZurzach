@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Pencil, Trash2, AlertCircle } from 'lucide-react';
-import { getExhibitions, deleteExhibition } from '../../lib/firebase-admin';
+import { PlusCircle, Pencil, Trash2, AlertCircle, GripVertical } from 'lucide-react';
+import { getExhibitions, deleteExhibition, updateExhibition } from '../../lib/firebase-admin';
 import ExhibitionForm from '../../components/admin/ExhibitionForm';
 import type { Exhibition } from '../../types';
 
@@ -16,7 +16,7 @@ export default function AdminExhibitions() {
     try {
       setLoading(true);
       const data = await getExhibitions();
-      setExhibitions(data);
+      setExhibitions(data.sort((a, b) => (a.order || 0) - (b.order || 0)));
     } catch (err) {
       setError('Failed to load exhibitions');
       console.error(err);
@@ -35,7 +35,6 @@ export default function AdminExhibitions() {
   };
 
   const handleDelete = async (id: string) => {
-    // If not confirming this exhibition, set it for confirmation
     if (deleteConfirm !== id) {
       setDeleteConfirm(id);
       return;
@@ -57,6 +56,33 @@ export default function AdminExhibitions() {
   const handleFormClose = () => {
     setShowForm(false);
     setSelectedExhibition(null);
+  };
+
+  const handleReorder = async (fromIndex: number, toIndex: number) => {
+    const newExhibitions = [...exhibitions];
+    const [moved] = newExhibitions.splice(fromIndex, 1);
+    newExhibitions.splice(toIndex, 0, moved);
+
+    // Update order numbers
+    const updatedExhibitions = newExhibitions.map((exhibition, index) => ({
+      ...exhibition,
+      order: index
+    }));
+
+    setExhibitions(updatedExhibitions);
+
+    // Update all exhibitions with new order
+    try {
+      await Promise.all(
+        updatedExhibitions.map(exhibition =>
+          updateExhibition(exhibition.id, { order: exhibition.order })
+        )
+      );
+    } catch (err) {
+      console.error('Failed to update exhibition order:', err);
+      setError('Failed to update exhibition order');
+      loadExhibitions(); // Reload original order on error
+    }
   };
 
   if (loading) {
@@ -91,6 +117,7 @@ export default function AdminExhibitions() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              <th className="w-8 px-2 py-3"></th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Exhibition
               </th>
@@ -106,8 +133,38 @@ export default function AdminExhibitions() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {exhibitions.map((exhibition) => (
-              <tr key={exhibition.id}>
+            {exhibitions.map((exhibition, index) => (
+              <tr key={exhibition.id} className="group hover:bg-gray-50">
+                <td className="px-2 py-4">
+                  <button
+                    className="cursor-move text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onMouseDown={(e) => {
+                      const startY = e.pageY;
+                      const startIndex = index;
+                      
+                      const handleMouseMove = (e: MouseEvent) => {
+                        const currentY = e.pageY;
+                        const diff = Math.round((currentY - startY) / 50);
+                        if (diff !== 0) {
+                          const newIndex = Math.max(0, Math.min(exhibitions.length - 1, startIndex + diff));
+                          if (newIndex !== startIndex) {
+                            handleReorder(startIndex, newIndex);
+                          }
+                        }
+                      };
+                      
+                      const handleMouseUp = () => {
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                      };
+                      
+                      document.addEventListener('mousemove', handleMouseMove);
+                      document.addEventListener('mouseup', handleMouseUp);
+                    }}
+                  >
+                    <GripVertical className="h-5 w-5" />
+                  </button>
+                </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center">
                     <img

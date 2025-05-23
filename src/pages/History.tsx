@@ -104,8 +104,8 @@ export default function History() {
                   .map((milestone, index) => (
                     <div key={index} className="bg-white rounded-lg shadow-sm p-6">
                       <div className="max-w-3xl mx-auto">
-                        <div className="flex items-start">
-                          <div className="text-3xl font-bold text-indigo-600 w-32 flex-shrink-0">
+                        <div className="flex flex-col sm:flex-row sm:items-start">
+                          <div className="text-3xl font-bold text-indigo-600 mb-3 sm:mb-0 sm:w-32 sm:flex-shrink-0">
                             {milestone.year}
                           </div>
                           <div>

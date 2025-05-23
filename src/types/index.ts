@@ -17,6 +17,7 @@ export interface Exhibition {
   endDate: string;
   artistIds: string[];
   isFeatured: boolean;
+  order: number;
   visitorInfo: {
     hours: string;
     ticketInfo: string;
